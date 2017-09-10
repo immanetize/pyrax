@@ -510,12 +510,14 @@ class BaseIdentity(object):
         """
         tenant_name = self.tenant_name or self.username
         tenant_id = self.tenant_id or self.username
-        return {"auth": {"passwordCredentials":
-                {"username": self.username,
-                "password": self.password,
-                },
-                "tenantId": tenant_id}}
-
+        return { 
+            "auth": {
+                "RAX-KSKEY:apiKeyCredentials": {
+                    "username": self.username,
+                    "apiKey": self.password,
+                    }
+                }
+            }
 
     # The following method_* methods wrap the _call() method.
     def method_head(self, uri, admin=False, data=None, headers=None,

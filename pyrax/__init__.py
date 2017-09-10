@@ -36,6 +36,8 @@ import os
 import re
 import six.moves.configparser as ConfigParser
 import warnings
+from rackspaceauth import v2
+from keystoneauth1 import session
 
 # keyring is an optional import
 try:
@@ -55,7 +57,6 @@ try:
     __version__ = version.version
 
     from novaclient import exceptions as _cs_exceptions
-    from novaclient import auth_plugin as _cs_auth_plugin
     from novaclient import client as nc
     from novaclient import client as _cs_client
     from novaclient import API_MAX_VERSION as _cs_max_version
@@ -117,7 +118,7 @@ regions = tuple()
 services = tuple()
 
 _client_classes = {
-        "compute": _cs_client.get_client_class(_cs_max_version),
+        "compute": _cs_client.Client(_cs_max_version),
         "cdn": CloudCDNClient,
         "object_store": StorageClient,
         "database": CloudDatabaseClient,
@@ -660,13 +661,9 @@ def _get_service_endpoint(context, svc, region=None, public=True):
 def connect_to_cloudservers(region=None, context=None, verify_ssl=None, **kwargs):
     """Creates a client for working with cloud servers."""
     context = context or identity
-    _cs_auth_plugin.discover_auth_systems()
     id_type = get_setting("identity_type")
-    if id_type != "keystone":
-        auth_plugin = _cs_auth_plugin.load_plugin(id_type)
-    else:
-        auth_plugin = None
-    region = _safe_region(region, context=context)
+    # region does not appear to be needed, auth token should be good for all
+#    region = _safe_region(region, context=context)
     mgt_url = _get_service_endpoint(context, "compute", region)
     cloudservers = None
     if not mgt_url:
@@ -680,19 +677,18 @@ def connect_to_cloudservers(region=None, context=None, verify_ssl=None, **kwargs
         extensions = nc.discover_extensions(_cs_max_version)
     except AttributeError:
         extensions = None
-    clt_class = _cs_client.get_client_class(_cs_max_version)
-    cloudservers = clt_class(context.username, context.password,
+    auth = v2.APIKey(username=context.username, password=context.password)
+#    clt_class = _cs_client.Client(_cs_max_version)
+    cloudservers = _cs_client.Client(_cs_max_version, context.username, context.password,
             project_id=context.tenant_id, auth_url=context.auth_endpoint,
             auth_system=id_type, region_name=region, service_type="compute",
-            auth_plugin=auth_plugin, insecure=insecure, extensions=extensions,
+            auth_plugin=None, insecure=insecure, extensions=extensions,
             http_log_debug=_http_debug, **kwargs)
-    agt = cloudservers.client.USER_AGENT
-    cloudservers.client.USER_AGENT = _make_agent_name(agt)
     cloudservers.client.management_url = mgt_url
     cloudservers.client.auth_token = context.token
     cloudservers.exceptions = _cs_exceptions
     # Add some convenience methods
-    cloudservers.list_images = cloudservers.images.list
+    cloudservers.list_images = cloudservers.glance.list
     cloudservers.list_flavors = cloudservers.flavors.list
     cloudservers.list = cloudservers.servers.list
 

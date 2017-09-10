@@ -58,7 +58,7 @@ class BaseClient(object):
     def __init__(self, identity, region_name=None, endpoint_type=None,
             management_url=None, service_name=None, timings=False,
             verify_ssl=True, http_log_debug=False, timeout=None):
-        self.version = "v1.1"
+        self.version = "v2.0"
         self.identity = identity
         self.region_name = region_name
         self.endpoint_type = endpoint_type
@@ -82,7 +82,6 @@ class BaseClient(object):
         the required manager class and configure it as needed.
         """
         raise NotImplementedError
-
 
     # The next 6 methods are simple pass-through to the manager.
     def list(self, limit=None, marker=None):
@@ -247,6 +246,9 @@ class BaseClient(object):
 
     def method_get(self, uri, **kwargs):
         """Method used to make GET requests."""
+
+
+
         return self._api_request(uri, "GET", **kwargs)
 
 
