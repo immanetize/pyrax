@@ -682,7 +682,7 @@ def connect_to_cloudservers(region=None, context=None, verify_ssl=None, **kwargs
     cloudservers = _cs_client.Client(_cs_max_version, context.username, context.password,
             project_id=context.tenant_id, auth_url=context.auth_endpoint,
             auth_system=id_type, region_name=region, service_type="compute",
-            auth_plugin=None, insecure=insecure, extensions=extensions,
+            insecure=insecure, extensions=extensions,
             http_log_debug=_http_debug, **kwargs)
     cloudservers.client.management_url = mgt_url
     cloudservers.client.auth_token = context.token
